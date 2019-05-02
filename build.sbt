@@ -48,18 +48,16 @@ val executionSettings = if (sequentialExecution) {
 
 val sharedSettings = extraSettings ++ executionSettings ++ Seq(
   organization := "com.twitter",
-  scalaVersion := "2.11.12",
+  scalaVersion := "2.12.8",
   crossScalaVersions := Seq("2.11.12", "2.12.4"),
   // To support hadoop 1.x
   javacOptions ++= Seq("-source", "1.6", "-target", "1.6"),
-
   javacOptions in doc ~= { (options: Seq[String]) =>
     val targetPos = options.indexOf("-target")
-    if(targetPos > -1) {
+    if (targetPos > -1) {
       options.take(targetPos) ++ options.drop(targetPos + 2)
     } else options
   },
-
   libraryDependencies ++= Seq(
     "junit" % "junit" % junitVersion % "test",
     "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -69,7 +67,6 @@ val sharedSettings = extraSettings ++ executionSettings ++ Seq(
     "com.novocode" % "junit-interface" % novocodeJunitVersion % "test",
     "org.scalatest" %% "scalatest" % scalatestVersion % "test"
   ),
-
   resolvers ++= Seq(
     Opts.resolver.sonatypeSnapshots,
     Opts.resolver.sonatypeReleases,
@@ -77,7 +74,6 @@ val sharedSettings = extraSettings ++ executionSettings ++ Seq(
     "Conjars Repository" at "https://conjars.org/repo",
     "Twitter Maven" at "https://maven.twttr.com"
   ),
-
   scalacOptions ++= Seq(
     "-unchecked",
     "-deprecation",
@@ -85,15 +81,15 @@ val sharedSettings = extraSettings ++ executionSettings ++ Seq(
     "-Yresolve-term-conflict:package",
     "-Ywarn-unused-import"
   ),
-
   // Publishing options:
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   releaseVersionBump := sbtrelease.Version.Bump.Minor, // need to tweak based on mima results
   publishMavenStyle := true,
   publishArtifact in Test := false,
-  pomIncludeRepository := { x => false },
-
+  pomIncludeRepository := { x =>
+    false
+  },
   releaseProcess := Seq[ReleaseStep](
     checkSnapshotDependencies,
     inquireVersions,
@@ -106,17 +102,15 @@ val sharedSettings = extraSettings ++ executionSettings ++ Seq(
     setNextVersion,
     commitNextVersion,
     ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
-    pushChanges),
-
+    pushChanges
+  ),
   publishTo := Some(
-      if (version.value.trim.toUpperCase.endsWith("SNAPSHOT"))
-        Opts.resolver.sonatypeSnapshots
-      else
-        Opts.resolver.sonatypeStaging
-    ),
-
-  pomExtra := (
-    <url>https://github.com/twitter/summingbird</url>
+    if (version.value.trim.toUpperCase.endsWith("SNAPSHOT"))
+      Opts.resolver.sonatypeSnapshots
+    else
+      Opts.resolver.sonatypeStaging
+  ),
+  pomExtra := (<url>https://github.com/twitter/summingbird</url>
     <licenses>
       <license>
         <name>Apache 2</name>
@@ -149,37 +143,34 @@ val sharedSettings = extraSettings ++ executionSettings ++ Seq(
 )
 
 lazy val noPublishSettings = Seq(
-    publish := (),
-    publishLocal := (),
-    test := (),
-    publishArtifact := false
-  )
-
-lazy val summingbird = Project(
-  id = "summingbird",
-  base = file("."),
-  settings = sharedSettings)
-  .settings(noPublishSettings)
-  .aggregate(
-  summingbirdCore,
-  summingbirdBatch,
-  summingbirdBatchHadoop,
-  summingbirdOnline,
-  summingbirdClient,
-  summingbirdStorm,
-  summingbirdStormTest,
-  summingbirdScalding,
-  summingbirdScaldingTest,
-  summingbirdBuilder,
-  summingbirdChill,
-  summingbirdExample,
-  summingbirdCoreTest
+  publish := (),
+  publishLocal := (),
+  test := (),
+  publishArtifact := false
 )
 
+lazy val summingbird = Project(id = "summingbird", base = file("."), settings = sharedSettings)
+  .settings(noPublishSettings)
+  .aggregate(
+    summingbirdCore,
+    summingbirdBatch,
+    summingbirdBatchHadoop,
+    summingbirdOnline,
+    summingbirdClient,
+    summingbirdStorm,
+    summingbirdStormTest,
+    summingbirdScalding,
+    summingbirdScaldingTest,
+    summingbirdBuilder,
+    summingbirdChill,
+    summingbirdExample,
+    summingbirdCoreTest
+  )
+
 /**
-  * This returns the youngest jar we released that is compatible with
-  * the current.
-  */
+ * This returns the youngest jar we released that is compatible with
+ * the current.
+ */
 val unreleasedModules = Set[String]()
 
 def youngestForwardCompatible(subProj: String) =
@@ -190,43 +181,93 @@ def youngestForwardCompatible(subProj: String) =
 //    .map { s => "com.twitter" % ("summingbird-" + s + "_2.11") % "0.9.0" }
 
 /**
-  * Empty this each time we publish a new version (and bump the minor number)
-  */
+ * Empty this each time we publish a new version (and bump the minor number)
+ */
 val ignoredABIProblems = {
   import com.typesafe.tools.mima.core._
   import com.typesafe.tools.mima.core.ProblemFilters._
   Seq(
     exclude[DirectMissingMethodProblem]("com.twitter.summingbird.memory.Memory.toStream"),
-    exclude[ReversedMissingMethodProblem]("com.twitter.summingbird.planner.DagOptimizer.FlatMapValuesFusion"),
-    exclude[ReversedMissingMethodProblem]("com.twitter.summingbird.planner.DagOptimizer.FlatMapKeyFusion"),
-    exclude[IncompatibleResultTypeProblem]("com.twitter.summingbird.batch.store.HDFSMetadata.versionedStore"),
+    exclude[ReversedMissingMethodProblem](
+      "com.twitter.summingbird.planner.DagOptimizer.FlatMapValuesFusion"
+    ),
+    exclude[ReversedMissingMethodProblem](
+      "com.twitter.summingbird.planner.DagOptimizer.FlatMapKeyFusion"
+    ),
+    exclude[IncompatibleResultTypeProblem](
+      "com.twitter.summingbird.batch.store.HDFSMetadata.versionedStore"
+    ),
     exclude[DirectMissingMethodProblem]("com.twitter.summingbird.planner.OnlinePlan.this"),
     exclude[DirectMissingMethodProblem]("com.twitter.summingbird.planner.StripNamedNode.castTail"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.planner.StripNamedNode.functionize"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.planner.StripNamedNode.castToPair"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.planner.StripNamedNode.processLevel"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.planner.StripNamedNode.toFunctional"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.planner.StripNamedNode.mutateGraph"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.planner.StripNamedNode.stripNamedNodes"),
-    exclude[ReversedMissingMethodProblem]("com.twitter.summingbird.online.OnlineDefaultConstants.com$twitter$summingbird$online$OnlineDefaultConstants$_setter_$DEFAULT_FM_MERGEABLE_WITH_SOURCE_="),
-    exclude[ReversedMissingMethodProblem]("com.twitter.summingbird.online.OnlineDefaultConstants.DEFAULT_FM_MERGEABLE_WITH_SOURCE"),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.planner.StripNamedNode.functionize"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.planner.StripNamedNode.castToPair"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.planner.StripNamedNode.processLevel"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.planner.StripNamedNode.toFunctional"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.planner.StripNamedNode.mutateGraph"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.planner.StripNamedNode.stripNamedNodes"
+    ),
+    exclude[ReversedMissingMethodProblem](
+      "com.twitter.summingbird.online.OnlineDefaultConstants.com$twitter$summingbird$online$OnlineDefaultConstants$_setter_$DEFAULT_FM_MERGEABLE_WITH_SOURCE_="
+    ),
+    exclude[ReversedMissingMethodProblem](
+      "com.twitter.summingbird.online.OnlineDefaultConstants.DEFAULT_FM_MERGEABLE_WITH_SOURCE"
+    ),
     exclude[MissingClassProblem]("com.twitter.summingbird.online.MergeableStoreFactoryAlgebra"),
     exclude[MissingClassProblem]("com.twitter.summingbird.online.MergeableStoreFactoryAlgebra$"),
-    exclude[IncompatibleResultTypeProblem]("com.twitter.summingbird.online.MergeableStoreFactory.mergeableStore"),
-    exclude[ReversedMissingMethodProblem]("com.twitter.summingbird.online.MergeableStoreFactory.mergeableStore"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.OperationContainer.init"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.OperationContainer.decoder"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.OperationContainer.encoder"),
-    exclude[ReversedMissingMethodProblem]("com.twitter.summingbird.online.executor.OperationContainer.init"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.FinalFlatMap.decoder"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.FinalFlatMap.encoder"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.FinalFlatMap.this"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.IntermediateFlatMap.decoder"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.IntermediateFlatMap.encoder"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.IntermediateFlatMap.this"),
+    exclude[IncompatibleResultTypeProblem](
+      "com.twitter.summingbird.online.MergeableStoreFactory.mergeableStore"
+    ),
+    exclude[ReversedMissingMethodProblem](
+      "com.twitter.summingbird.online.MergeableStoreFactory.mergeableStore"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.OperationContainer.init"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.OperationContainer.decoder"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.OperationContainer.encoder"
+    ),
+    exclude[ReversedMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.OperationContainer.init"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.FinalFlatMap.decoder"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.FinalFlatMap.encoder"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.FinalFlatMap.this"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.IntermediateFlatMap.decoder"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.IntermediateFlatMap.encoder"
+    ),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.IntermediateFlatMap.this"
+    ),
     exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.AsyncBase.init"),
-    exclude[IncompatibleResultTypeProblem]("com.twitter.summingbird.online.executor.AsyncBase.execute"),
-    exclude[IncompatibleResultTypeProblem]("com.twitter.summingbird.online.executor.AsyncBase.executeTick"),
+    exclude[IncompatibleResultTypeProblem](
+      "com.twitter.summingbird.online.executor.AsyncBase.execute"
+    ),
+    exclude[IncompatibleResultTypeProblem](
+      "com.twitter.summingbird.online.executor.AsyncBase.executeTick"
+    ),
     exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.AsyncBase.logger"),
     exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.Summer.init"),
     exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.Summer.this"),
@@ -241,21 +282,33 @@ val ignoredABIProblems = {
     exclude[IncompatibleMethTypeProblem]("com.twitter.summingbird.storm.Storm.getOrElse"),
     exclude[DirectMissingMethodProblem]("com.twitter.summingbird.storm.BaseBolt.apply"),
     exclude[IncompatibleResultTypeProblem]("com.twitter.summingbird.example.Memcache.client"),
-    exclude[DirectMissingMethodProblem]("com.twitter.summingbird.online.executor.OperationContainer.notifyFailure"),
-    exclude[ReversedMissingMethodProblem]("com.twitter.summingbird.online.executor.OperationContainer.notifyFailure"),
-    exclude[IncompatibleMethTypeProblem]("com.twitter.summingbird.online.executor.AsyncBase.notifyFailure"),
-    exclude[IncompatibleMethTypeProblem]("com.twitter.summingbird.online.executor.Summer.notifyFailure"),
+    exclude[DirectMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.OperationContainer.notifyFailure"
+    ),
+    exclude[ReversedMissingMethodProblem](
+      "com.twitter.summingbird.online.executor.OperationContainer.notifyFailure"
+    ),
+    exclude[IncompatibleMethTypeProblem](
+      "com.twitter.summingbird.online.executor.AsyncBase.notifyFailure"
+    ),
+    exclude[IncompatibleMethTypeProblem](
+      "com.twitter.summingbird.online.executor.Summer.notifyFailure"
+    ),
     exclude[IncompatibleMethTypeProblem]("com.twitter.summingbird.TPNamedProducer.this")
   )
 }
 
 def module(name: String) = {
   val id = "summingbird-%s".format(name)
-  Project(id = id, base = file(id), settings = sharedSettings ++ Seq(
-    Keys.name := id,
-    mimaPreviousArtifacts := youngestForwardCompatible(name).toSet,
-    mimaBinaryIssueFilters ++= ignoredABIProblems
-  ))
+  Project(
+    id = id,
+    base = file(id),
+    settings = sharedSettings ++ Seq(
+      Keys.name := id,
+      mimaPreviousArtifacts := youngestForwardCompatible(name).toSet,
+      mimaBinaryIssueFilters ++= ignoredABIProblems
+    )
+  )
 }
 
 lazy val summingbirdBatch = module("batch").settings(
@@ -267,178 +320,200 @@ lazy val summingbirdBatch = module("batch").settings(
   )
 )
 
-lazy val summingbirdChill = module("chill").settings(
-  libraryDependencies ++= Seq(
-    "com.twitter" %% "chill" % chillVersion,
-    "com.twitter" %% "chill-bijection" % chillVersion,
-    "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test"
+lazy val summingbirdChill = module("chill")
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.twitter" %% "chill" % chillVersion,
+      "com.twitter" %% "chill-bijection" % chillVersion,
+      "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test"
+    )
   )
-).dependsOn(
+  .dependsOn(
     summingbirdCore,
     summingbirdBatch
-)
-
-lazy val summingbirdClient = module("client").settings(
-  libraryDependencies ++= Seq(
-    "com.twitter" %% "algebird-core" % algebirdVersion,
-    "com.twitter" %% "algebird-util" % algebirdVersion,
-    "com.twitter" %% "bijection-core" % bijectionVersion,
-    "com.twitter" %% "storehaus-core" % storehausVersion,
-    "com.twitter" %% "storehaus-algebra" % storehausVersion,
-    "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test"
   )
-).dependsOn(summingbirdBatch)
+
+lazy val summingbirdClient = module("client")
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "com.twitter" %% "algebird-util" % algebirdVersion,
+      "com.twitter" %% "bijection-core" % bijectionVersion,
+      "com.twitter" %% "storehaus-core" % storehausVersion,
+      "com.twitter" %% "storehaus-algebra" % storehausVersion,
+      "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test"
+    )
+  )
+  .dependsOn(summingbirdBatch)
 
 lazy val summingbirdCore = module("core").settings(
   libraryDependencies ++= Seq(
     "com.twitter" %% "algebird-core" % algebirdVersion,
-    "com.stripe" %% "dagon-core" % dagonVersion)
+    "com.stripe" %% "dagon-core" % dagonVersion
+  )
 )
 
-lazy val summingbirdOnline = module("online").settings(
-  libraryDependencies ++= Seq(
-    "com.twitter" %% "algebird-core" % algebirdVersion,
-    "com.twitter" %% "algebird-util" % algebirdVersion,
-    "com.twitter" %% "bijection-core" % bijectionVersion,
-    "com.twitter" %% "bijection-util" % bijectionVersion,
-    "com.twitter" %% "storehaus-core" % storehausVersion,
-    "com.twitter" %% "chill" % chillVersion,
-    "com.twitter" %% "storehaus-algebra" % storehausVersion,
-    "com.twitter" %% "util-core" % utilVersion,
-    "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test",
-    "org.spire-math" %% "chain" % chainVersion
+lazy val summingbirdOnline = module("online")
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "com.twitter" %% "algebird-util" % algebirdVersion,
+      "com.twitter" %% "bijection-core" % bijectionVersion,
+      "com.twitter" %% "bijection-util" % bijectionVersion,
+      "com.twitter" %% "storehaus-core" % storehausVersion,
+      "com.twitter" %% "chill" % chillVersion,
+      "com.twitter" %% "storehaus-algebra" % storehausVersion,
+      "com.twitter" %% "util-core" % utilVersion,
+      "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test",
+      "org.spire-math" %% "chain" % chainVersion
+    )
   )
-).dependsOn(
-  summingbirdCore % "test->test;compile->compile",
-  summingbirdCoreTest % "test->test",
-  summingbirdBatch,
-  summingbirdClient
-)
-
-lazy val summingbirdStorm = module("storm").settings(
-  parallelExecution in Test := false,
-  libraryDependencies ++= Seq(
-    "com.twitter" %% "algebird-core" % algebirdVersion,
-    "com.twitter" %% "bijection-core" % bijectionVersion,
-    "com.twitter" %% "chill" % chillVersion,
-    "com.twitter" % "chill-storm" % chillVersion,
-    "com.twitter" %% "chill-bijection" % chillVersion,
-    "com.twitter" %% "storehaus-core" % storehausVersion,
-    "com.twitter" %% "storehaus-algebra" % storehausVersion,
-    "com.twitter" %% "scalding-args" % scaldingVersion,
-    "com.twitter" %% "tormenta-core" % tormentaVersion,
-    "com.twitter" %% "util-core" % utilVersion,
-    "org.spire-math" %% "chain" % chainVersion,
-    stormDep % "provided"
+  .dependsOn(
+    summingbirdCore % "test->test;compile->compile",
+    summingbirdCoreTest % "test->test",
+    summingbirdBatch,
+    summingbirdClient
   )
-).dependsOn(
-  summingbirdCore % "test->test;compile->compile",
-  summingbirdOnline,
-  summingbirdChill,
-  summingbirdBatch
-)
 
-lazy val summingbirdStormTest = module("storm-test").settings(
-  parallelExecution in Test := false,
-  libraryDependencies ++= Seq(
-    "com.twitter" %% "algebird-core" % algebirdVersion,
-    "com.twitter" %% "bijection-core" % bijectionVersion,
-    "com.twitter" %% "storehaus-core" % storehausVersion,
-    "com.twitter" %% "storehaus-algebra" % storehausVersion,
-    "com.twitter" %% "tormenta-core" % tormentaVersion,
-    "com.twitter" %% "util-core" % utilVersion,
-    stormDep % "provided",
-
-    // Storm uses log4j2 for logs, we want to enforce usage of log4j12,
-    // to make it consistent with other tests.
-    (stormDep
-      exclude("org.slf4j", "log4j-over-slf4j")
-      exclude("org.apache.logging.log4j", "log4j-slf4j-impl")) % "test",
-    "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test"
+lazy val summingbirdStorm = module("storm")
+  .settings(
+    parallelExecution in Test := false,
+    libraryDependencies ++= Seq(
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "com.twitter" %% "bijection-core" % bijectionVersion,
+      "com.twitter" %% "chill" % chillVersion,
+      "com.twitter" % "chill-storm" % chillVersion,
+      "com.twitter" %% "chill-bijection" % chillVersion,
+      "com.twitter" %% "storehaus-core" % storehausVersion,
+      "com.twitter" %% "storehaus-algebra" % storehausVersion,
+      "com.twitter" %% "scalding-args" % scaldingVersion,
+      "com.twitter" %% "tormenta-core" % tormentaVersion,
+      "com.twitter" %% "util-core" % utilVersion,
+      "org.spire-math" %% "chain" % chainVersion,
+      stormDep % "provided"
+    )
   )
-).dependsOn(
-  summingbirdCore % "test->test;compile->compile",
-  summingbirdCoreTest % "test->test",
-  summingbirdStorm
-)
-
-lazy val summingbirdScalding = module("scalding").settings(
-  libraryDependencies ++= Seq(
-    "com.twitter" %% "algebird-core" % algebirdVersion,
-    "com.twitter" %% "algebird-util" % algebirdVersion,
-    "com.twitter" %% "algebird-bijection" % algebirdVersion,
-    "com.twitter" %% "bijection-json" % bijectionVersion,
-    "com.twitter" %% "chill" % chillVersion,
-    "com.twitter" % "chill-hadoop" % chillVersion,
-    "com.twitter" %% "chill-bijection" % chillVersion,
-    "commons-lang" % "commons-lang" % commonsLangVersion,
-    "com.twitter" %% "scalding-core" % scaldingVersion,
-    "com.twitter" %% "scalding-commons" % scaldingVersion,
-    "org.apache.hadoop" % "hadoop-core" % hadoopVersion % "provided"
+  .dependsOn(
+    summingbirdCore % "test->test;compile->compile",
+    summingbirdOnline,
+    summingbirdChill,
+    summingbirdBatch
   )
-).dependsOn(
-  summingbirdCore % "test->test;compile->compile",
-  summingbirdChill,
-  summingbirdBatchHadoop,
-  summingbirdBatch
-)
 
-lazy val summingbirdScaldingTest = module("scalding-test").settings(
-  libraryDependencies ++= Seq(
-    "org.scalacheck" %% "scalacheck" % scalaCheckVersion,
-    "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test",
-    "org.apache.hadoop" % "hadoop-core" % hadoopVersion % "provided"
+lazy val summingbirdStormTest = module("storm-test")
+  .settings(
+    parallelExecution in Test := false,
+    libraryDependencies ++= Seq(
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "com.twitter" %% "bijection-core" % bijectionVersion,
+      "com.twitter" %% "storehaus-core" % storehausVersion,
+      "com.twitter" %% "storehaus-algebra" % storehausVersion,
+      "com.twitter" %% "tormenta-core" % tormentaVersion,
+      "com.twitter" %% "util-core" % utilVersion,
+      stormDep % "provided",
+      // Storm uses log4j2 for logs, we want to enforce usage of log4j12,
+      // to make it consistent with other tests.
+      (stormDep
+        exclude ("org.slf4j", "log4j-over-slf4j")
+        exclude ("org.apache.logging.log4j", "log4j-slf4j-impl")) % "test",
+      "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test"
+    )
   )
-).dependsOn(
-  summingbirdCore % "test->test;compile->compile",
-  summingbirdCoreTest % "test->test",
-  summingbirdChill,
-  summingbirdBatchHadoop,
-  summingbirdScalding
-)
-
-lazy val summingbirdBatchHadoop = module("batch-hadoop").settings(
-  libraryDependencies ++= Seq(
-    "com.twitter" %% "algebird-core" % algebirdVersion,
-    "com.twitter" %% "bijection-json" % bijectionVersion,
-    "com.twitter" %% "scalding-commons" % scaldingVersion,
-    "com.twitter" %% "scalding-date" % scaldingVersion,
-    "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test",
-    "org.apache.hadoop" % "hadoop-core" % hadoopVersion % "provided"
+  .dependsOn(
+    summingbirdCore % "test->test;compile->compile",
+    summingbirdCoreTest % "test->test",
+    summingbirdStorm
   )
-).dependsOn(
-  summingbirdCore % "test->test;compile->compile",
-  summingbirdBatch
-)
 
-lazy val summingbirdBuilder = module("builder").settings(
-  libraryDependencies ++= Seq(
-    stormDep % "provided",
-    "org.apache.hadoop" % "hadoop-core" % hadoopVersion % "provided"
+lazy val summingbirdScalding = module("scalding")
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "com.twitter" %% "algebird-util" % algebirdVersion,
+      "com.twitter" %% "algebird-bijection" % algebirdVersion,
+      "com.twitter" %% "bijection-json" % bijectionVersion,
+      "com.twitter" %% "chill" % chillVersion,
+      "com.twitter" % "chill-hadoop" % chillVersion,
+      "com.twitter" %% "chill-bijection" % chillVersion,
+      "commons-lang" % "commons-lang" % commonsLangVersion,
+      "com.twitter" %% "scalding-core" % scaldingVersion,
+      "com.twitter" %% "scalding-commons" % scaldingVersion,
+      "org.apache.hadoop" % "hadoop-core" % hadoopVersion % "provided"
+    )
   )
-).dependsOn(
-  summingbirdCore,
-  summingbirdStorm,
-  summingbirdScalding
-)
-
-lazy val summingbirdExample = module("example").settings(
-  libraryDependencies ++= Seq(
-    "com.twitter" %% "bijection-netty" % bijectionVersion,
-    "com.twitter" %% "tormenta-twitter" % tormentaVersion,
-    "com.twitter" %% "storehaus-memcache" % storehausVersion,
-    stormDep
+  .dependsOn(
+    summingbirdCore % "test->test;compile->compile",
+    summingbirdChill,
+    summingbirdBatchHadoop,
+    summingbirdBatch
   )
-).dependsOn(summingbirdCore, summingbirdStorm)
 
-lazy val summingbirdCoreTest = module("core-test").settings(
-  parallelExecution in Test := false,
-  libraryDependencies ++=Seq(
-    "junit" % "junit" % junitVersion % "provided",
-    "org.slf4j" % "slf4j-api" % slf4jVersion % "provided",
-    "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "provided",
-    "org.scalatest" %% "scalatest" % scalatestVersion % "provided")
+lazy val summingbirdScaldingTest = module("scalding-test")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.scalacheck" %% "scalacheck" % scalaCheckVersion,
+      "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test",
+      "org.apache.hadoop" % "hadoop-core" % hadoopVersion % "provided"
+    )
+  )
+  .dependsOn(
+    summingbirdCore % "test->test;compile->compile",
+    summingbirdCoreTest % "test->test",
+    summingbirdChill,
+    summingbirdBatchHadoop,
+    summingbirdScalding
+  )
 
-).dependsOn(
+lazy val summingbirdBatchHadoop = module("batch-hadoop")
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "com.twitter" %% "bijection-json" % bijectionVersion,
+      "com.twitter" %% "scalding-commons" % scaldingVersion,
+      "com.twitter" %% "scalding-date" % scaldingVersion,
+      "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test",
+      "org.apache.hadoop" % "hadoop-core" % hadoopVersion % "provided"
+    )
+  )
+  .dependsOn(
+    summingbirdCore % "test->test;compile->compile",
+    summingbirdBatch
+  )
+
+lazy val summingbirdBuilder = module("builder")
+  .settings(
+    libraryDependencies ++= Seq(
+      stormDep % "provided",
+      "org.apache.hadoop" % "hadoop-core" % hadoopVersion % "provided"
+    )
+  )
+  .dependsOn(
+    summingbirdCore,
+    summingbirdStorm,
+    summingbirdScalding
+  )
+
+lazy val summingbirdExample = module("example")
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.twitter" %% "bijection-netty" % bijectionVersion,
+      "com.twitter" %% "tormenta-twitter" % tormentaVersion,
+      "com.twitter" %% "storehaus-memcache" % storehausVersion,
+      stormDep
+    )
+  )
+  .dependsOn(summingbirdCore, summingbirdStorm)
+
+lazy val summingbirdCoreTest = module("core-test")
+  .settings(
+    parallelExecution in Test := false,
+    libraryDependencies ++= Seq(
+      "junit" % "junit" % junitVersion % "provided",
+      "org.slf4j" % "slf4j-api" % slf4jVersion % "provided",
+      "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "provided",
+      "org.scalatest" %% "scalatest" % scalatestVersion % "provided"
+    )
+  )
+  .dependsOn(
     summingbirdCore % "test->test;compile->compile"
   )
